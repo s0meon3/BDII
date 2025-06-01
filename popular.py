@@ -334,44 +334,15 @@ def popular_compra(cursor, n):
         cursor.execute("SELECT preco FROM produto WHERE ID_Prod = %s", (id_prod,))
         preco_unitario = cursor.fetchone()[0]
         preco_total = round(preco_unitario * quantidade, 2)
+        nota_avaliacao = random.randint(1, 5)
+        comentario_avaliacao = fake.sentence(nb_words=12)
 
         cursor.execute("""
-            INSERT INTO compra (ID, ID_Prod, CPF_comprador, Data, Quantidade_Produtos, Preco_total)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (i, id_prod, cpf_comprador, data, quantidade, preco_total))
+            INSERT INTO compra (ID, ID_Prod, CPF_comprador, Data, Quantidade_Produtos, Preco_total, nota_avaliacao, comentario_avaliacao)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (i, id_prod, cpf_comprador, data, quantidade, preco_total, nota_avaliacao, comentario_avaliacao))
 
     print(f"{n} compras inseridas.")
-
-
-
-def popular_avalia(cursor, n):
-    cursor.execute("SELECT ID, CPF_comprador FROM compra")
-    compras = cursor.fetchall()  # lista de tuplas (ID, CPF_comprador)
-
-    avaliacoes_inseridas = 0
-    avaliada = set()
-
-    while avaliacoes_inseridas < n and len(avaliada) < len(compras):
-        id_compra, _ = random.choice(compras)
-
-        if id_compra in avaliada:
-            continue  # essa compra já foi avaliada, pula
-
-        nota = random.randint(1, 5)
-        comentario = fake.sentence(nb_words=12)
-
-        try:
-            cursor.execute("""
-                INSERT INTO avalia (ID_compra, Nota, Comentario)
-                VALUES (%s, %s, %s)
-            """, (id_compra, nota, comentario))
-            avaliada.add(id_compra)
-            avaliacoes_inseridas += 1
-        except psycopg2.errors.UniqueViolation:
-            pass
-
-    print(f"{avaliacoes_inseridas} avaliações inseridas.")
-
 
 if __name__ == "__main__":
     load_dotenv()
@@ -414,9 +385,6 @@ if __name__ == "__main__":
     conn.commit()
 
     popular_compra(cursor, 182550)
-    conn.commit()
-
-    popular_avalia(cursor, 170000)
     conn.commit()
 
     cursor.close()
