@@ -1,0 +1,112 @@
+DBSnackEach - Modelo Fisico
+CREATE TABLE usuario (
+    cpf CHAR(11) PRIMARY KEY,
+    nome VARCHAR(30),
+    email VARCHAR(50),
+    senha CHAR(7),
+    curso VARCHAR(30),
+    tipo_usuario VARCHAR(20) CHECK (tipo_usuario IN ('vendedor', 'comprador', 'admin'))
+);
+
+CREATE TABLE vendedor (
+    cpf CHAR(11) NOT NULL,
+    nome_tenda VARCHAR(30) NOT NULL,
+    horario_inicio NUMERIC(2) NOT NULL,
+    horario_fim NUMERIC(2) NOT NULL,
+    faz_entrega BOOLEAN NOT NULL,
+    ativo BOOLEAN NOT NULL,
+    CONSTRAINT PK_vendedor PRIMARY KEY (cpf),
+    CONSTRAINT FK_vendedor_usuario FOREIGN KEY (cpf) REFERENCES usuario(cpf)
+);
+
+CREATE TABLE comprador (
+    cpf CHAR(11) NOT NULL,
+    dinheiro_disponivel FLOAT NOT NULL,
+    CONSTRAINT PK_comprador PRIMARY KEY (cpf),
+    CONSTRAINT FK_comprador_usuario FOREIGN KEY (cpf) REFERENCES usuario(cpf)
+);
+
+CREATE TABLE admin (
+    cpf CHAR(11) NOT NULL,
+    CONSTRAINT PK_admin PRIMARY KEY (cpf),
+    CONSTRAINT FK_admin_usuario FOREIGN KEY (cpf) REFERENCES usuario(cpf)
+);
+
+create table produto (
+    ID_Prod INT not null,
+    Nome varchar(30) not null,
+    Descricao varchar(100) not null,
+    Preco float(3) not null,
+    CPF_vendedor char(11) not null,
+    constraint PK_PRODUTO primary key (ID_Prod),
+    constraint FK_PRODUTO_VENDEDOR foreign key (CPF_vendedor) references VENDEDOR(cpf)
+);
+
+create table Categoria (
+    ID_cat INT not null,
+    nome_cat varchar(30) not null,
+    constraint PK_CATEGORIA primary key (ID_cat)
+);
+
+CREATE TABLE Produto_Categoria (
+    id_prod INT NOT NULL,
+    id_cat INT NOT NULL,
+    PRIMARY KEY (id_prod, id_cat),
+    FOREIGN KEY (id_prod) REFERENCES Produto(ID_Prod),
+    FOREIGN KEY (id_cat) REFERENCES Categoria(id_cat)
+);
+
+create table Alimentos_Preferidos (
+    CPF_comprador char(11) not null,
+    ID_Cat int not null,
+    Alimento varchar(30) not null,
+    constraint PK_ALIMENTOS_PREFERIDOS primary key (CPF_comprador, Alimento),
+    constraint FK_ALIMENTOS_PREFERIDOS_COMPRADOR foreign key (CPF_comprador) references COMPRADOR(cpf),
+    constraint FK_ALIMENTOS_PREFERIDOS_CATEGORIA foreign key (ID_Cat) references Categoria(id_cat)
+);
+
+create table Forma_pagamento (
+    CPF_vendedor char(11) not null,
+    Forma_pagamento varchar(30) not null,
+    constraint PK_FORMA_PAGAMENTO primary key (CPF_vendedor, Forma_pagamento),
+    constraint FK_FORMA_PAGAMENTO_VENDEDOR foreign key (CPF_vendedor) references VENDEDOR(cpf)
+);
+
+create table LOCAL_VENDA (
+    ID_Local INT not null,
+    Nome varchar(30) not null,
+    Latitude numeric(12,8) not null,
+    Longitude numeric(12,8) not null,
+    constraint PK_LOCAL_VENDA primary key (ID_Local)
+);
+
+create table vendedor_local (
+    ID_Local int not null,
+    CPF_vendedor char(11) not null,
+    constraint PK_VENDEDOR_LOCAL primary key (ID_Local, CPF_vendedor),
+    constraint FK_VENDEDOR_LOCAL_VENDEDOR foreign key (CPF_vendedor) references VENDEDOR(cpf),
+    constraint FK_VENDEDOR_LOCAL_LOCAL_VENDA foreign key (ID_Local) references LOCAL_VENDA(id_local)
+);
+
+create table compra (
+    ID INT not null,
+    ID_Prod INT not null,
+    CPF_comprador char(11) not null,
+    Data date not null,
+    Quantidade_Produtos INT not null,
+    Preco_total float(4) not null,
+    constraint PK_COMPRA primary key (ID),
+    constraint FK_COMPRA_PRODUTO foreign key (ID_Prod) references PRODUTO(id_prod),
+    constraint FK_COMPRA_COMPRADOR foreign key (CPF_comprador) references COMPRADOR(cpf)
+);
+
+CREATE TABLE avalia (
+    ID_compra INT not null,
+    Nota INT NOT NULL,
+    Comentario TEXT,
+    constraint PK_AVALIA primary key (ID_compra),
+    constraint FK_AVALIA_COMPRA foreign key (ID_compra) REFERENCES compra(ID)
+);
+
+CREATE INDEX idx_compra_data ON compra(data);
+CREATE INDEX idx_ap_cpf_comprador ON alimentos_preferidos(cpf_comprador);
