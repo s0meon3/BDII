@@ -95,17 +95,11 @@ create table compra (
     Data date not null,
     Quantidade_Produtos INT not null,
     Preco_total float(4) not null,
+    Nota_avaliacao INT,
+    Comentario_avaliacao TEXT,
     constraint PK_COMPRA primary key (ID),
     constraint FK_COMPRA_PRODUTO foreign key (ID_Prod) references PRODUTO(id_prod),
     constraint FK_COMPRA_COMPRADOR foreign key (CPF_comprador) references COMPRADOR(cpf)
-);
-
-CREATE TABLE avalia (
-    ID_compra INT not null,
-    Nota INT NOT NULL,
-    Comentario TEXT,
-    constraint PK_AVALIA primary key (ID_compra),
-    constraint FK_AVALIA_COMPRA foreign key (ID_compra) REFERENCES compra(ID)
 );
 
 CREATE INDEX idx_compra_data ON compra(data);
