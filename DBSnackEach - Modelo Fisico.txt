@@ -1,106 +1,143 @@
 DBSnackEach - Modelo Fisico
+-- #####################################################################
+-- # TABELAS DE USUÁRIOS E ESPECIALIZAÇÃO
+-- #####################################################################
+
 CREATE TABLE usuario (
-    cpf CHAR(11) PRIMARY KEY,
-    nome VARCHAR(30),
-    email VARCHAR(50),
-    senha CHAR(7),
-    curso VARCHAR(30),
-    tipo_usuario VARCHAR(20) CHECK (tipo_usuario IN ('vendedor', 'comprador', 'admin'))
+    id SERIAL PRIMARY KEY,
+    cpf VARCHAR(11) NOT NULL UNIQUE,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    senha_hash VARCHAR(255) NOT NULL, -- Armazena o HASH da senha
+    curso VARCHAR(100),
+    tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('VENDEDOR', 'COMPRADOR', 'ADMIN'))
 );
 
+-- Tabela de Vendedores, com uma relação 1-para-1 com usuário.
 CREATE TABLE vendedor (
-    cpf CHAR(11) NOT NULL,
-    nome_tenda VARCHAR(30) NOT NULL,
-    horario_inicio NUMERIC(2) NOT NULL,
-    horario_fim NUMERIC(2) NOT NULL,
-    faz_entrega BOOLEAN NOT NULL,
-    ativo BOOLEAN NOT NULL,
-    CONSTRAINT PK_vendedor PRIMARY KEY (cpf),
-    CONSTRAINT FK_vendedor_usuario FOREIGN KEY (cpf) REFERENCES usuario(cpf)
+    usuario_id INT PRIMARY KEY,
+    nome_tenda VARCHAR(50) NOT NULL,
+    horario_inicio TIME,
+    horario_fim TIME,
+    faz_entrega BOOLEAN NOT NULL DEFAULT FALSE,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT fk_vendedor_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
 );
 
 CREATE TABLE comprador (
-    cpf CHAR(11) NOT NULL,
-    dinheiro_disponivel FLOAT NOT NULL,
-    CONSTRAINT PK_comprador PRIMARY KEY (cpf),
-    CONSTRAINT FK_comprador_usuario FOREIGN KEY (cpf) REFERENCES usuario(cpf)
+    usuario_id INT PRIMARY KEY,
+    dinheiro_disponivel DECIMAL(10, 2) NOT NULL DEFAULT 0.00, -- Tipo DECIMAL é preciso para valores monetários.
+    CONSTRAINT fk_comprador_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
 );
 
 CREATE TABLE admin (
-    cpf CHAR(11) NOT NULL,
-    CONSTRAINT PK_admin PRIMARY KEY (cpf),
-    CONSTRAINT FK_admin_usuario FOREIGN KEY (cpf) REFERENCES usuario(cpf)
+    usuario_id INT PRIMARY KEY,
+    CONSTRAINT fk_admin_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
 );
 
-create table produto (
-    ID_Prod INT not null,
-    Nome varchar(30) not null,
-    Descricao varchar(100) not null,
-    Preco float(3) not null,
-    CPF_vendedor char(11) not null,
-    constraint PK_PRODUTO primary key (ID_Prod),
-    constraint FK_PRODUTO_VENDEDOR foreign key (CPF_vendedor) references VENDEDOR(cpf)
+-- #####################################################################
+-- # TABELAS DE PRODUTOS E CATEGORIAS
+-- #####################################################################
+
+CREATE TABLE categoria (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL UNIQUE
 );
 
-create table Categoria (
-    ID_cat INT not null,
-    nome_cat varchar(30) not null,
-    constraint PK_CATEGORIA primary key (ID_cat)
+CREATE TABLE produto (
+    id SERIAL PRIMARY KEY,
+    vendedor_usuario_id INT NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    preco DECIMAL(10, 2) NOT NULL,
+    CONSTRAINT fk_produto_vendedor FOREIGN KEY (vendedor_usuario_id) REFERENCES vendedor(usuario_id) ON DELETE SET NULL
 );
 
-CREATE TABLE Produto_Categoria (
-    id_prod INT NOT NULL,
-    id_cat INT NOT NULL,
-    PRIMARY KEY (id_prod, id_cat),
-    FOREIGN KEY (id_prod) REFERENCES Produto(ID_Prod),
-    FOREIGN KEY (id_cat) REFERENCES Categoria(id_cat)
+CREATE TABLE produto_categoria (
+    produto_id INT NOT NULL,
+    categoria_id INT NOT NULL,
+    CONSTRAINT pk_produto_categoria PRIMARY KEY (produto_id, categoria_id),
+    CONSTRAINT fk_pc_produto FOREIGN KEY (produto_id) REFERENCES produto(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pc_categoria FOREIGN KEY (categoria_id) REFERENCES categoria(id) ON DELETE CASCADE
 );
 
-create table Alimentos_Preferidos (
-    CPF_comprador char(11) not null,
-    ID_Cat int not null,
-    Alimento varchar(30) not null,
-    constraint PK_ALIMENTOS_PREFERIDOS primary key (CPF_comprador, Alimento),
-    constraint FK_ALIMENTOS_PREFERIDOS_COMPRADOR foreign key (CPF_comprador) references COMPRADOR(cpf),
-    constraint FK_ALIMENTOS_PREFERIDOS_CATEGORIA foreign key (ID_Cat) references Categoria(id_cat)
+-- #####################################################################
+-- # TABELAS DE COMPRAS E TRANSAÇÕES
+-- #####################################################################
+
+CREATE TABLE compra (
+    id SERIAL PRIMARY KEY,
+    comprador_usuario_id INT NOT NULL,
+    data_compra TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- TIMESTAMP armazena data e hora da transação.
+    preco_total DECIMAL(10, 2) NOT NULL,
+    nota_avaliacao INT CHECK (nota_avaliacao BETWEEN 1 AND 5),
+    comentario_avaliacao TEXT,
+    CONSTRAINT fk_compra_comprador FOREIGN KEY (comprador_usuario_id) REFERENCES comprador(usuario_id)
 );
 
-create table Forma_pagamento (
-    CPF_vendedor char(11) not null,
-    Forma_pagamento varchar(30) not null,
-    constraint PK_FORMA_PAGAMENTO primary key (CPF_vendedor, Forma_pagamento),
-    constraint FK_FORMA_PAGAMENTO_VENDEDOR foreign key (CPF_vendedor) references VENDEDOR(cpf)
+CREATE TABLE compra_produto (
+    compra_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade INT NOT NULL CHECK (quantidade > 0),
+    preco_unitario DECIMAL(10, 2) NOT NULL, -- Armazena o preço no momento da compra, para histórico.
+    CONSTRAINT pk_compra_produto PRIMARY KEY (compra_id, produto_id),
+    CONSTRAINT fk_cp_compra FOREIGN KEY (compra_id) REFERENCES compra(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cp_produto FOREIGN KEY (produto_id) REFERENCES produto(id)
 );
 
-create table LOCAL_VENDA (
-    ID_Local INT not null,
-    Nome varchar(30) not null,
-    Latitude numeric(12,8) not null,
-    Longitude numeric(12,8) not null,
-    constraint PK_LOCAL_VENDA primary key (ID_Local)
+-- #####################################################################
+-- # TABELAS COMPLEMENTARES
+-- #####################################################################
+
+CREATE TABLE alimentos_preferidos (
+    comprador_usuario_id INT NOT NULL,
+    categoria_id INT NOT NULL,
+    alimento VARCHAR(50) NOT NULL,
+    CONSTRAINT pk_alimentos_preferidos PRIMARY KEY (comprador_usuario_id, alimento),
+    CONSTRAINT fk_ap_comprador FOREIGN KEY (comprador_usuario_id) REFERENCES comprador(usuario_id) ON DELETE CASCADE,
+    CONSTRAINT fk_ap_categoria FOREIGN KEY (categoria_id) REFERENCES categoria(id) ON DELETE CASCADE
 );
 
-create table vendedor_local (
-    ID_Local int not null,
-    CPF_vendedor char(11) not null,
-    constraint PK_VENDEDOR_LOCAL primary key (ID_Local, CPF_vendedor),
-    constraint FK_VENDEDOR_LOCAL_VENDEDOR foreign key (CPF_vendedor) references VENDEDOR(cpf),
-    constraint FK_VENDEDOR_LOCAL_LOCAL_VENDA foreign key (ID_Local) references LOCAL_VENDA(id_local)
+CREATE TABLE forma_pagamento (
+    vendedor_usuario_id INT NOT NULL,
+    forma_pagamento VARCHAR(30) NOT NULL,
+    CONSTRAINT pk_forma_pagamento PRIMARY KEY (vendedor_usuario_id, forma_pagamento),
+    CONSTRAINT fk_fp_vendedor FOREIGN KEY (vendedor_usuario_id) REFERENCES vendedor(usuario_id) ON DELETE CASCADE
 );
 
-create table compra (
-    ID INT not null,
-    ID_Prod INT not null,
-    CPF_comprador char(11) not null,
-    Data date not null,
-    Quantidade_Produtos INT not null,
-    Preco_total float(4) not null,
-    Nota_avaliacao INT,
-    Comentario_avaliacao TEXT,
-    constraint PK_COMPRA primary key (ID),
-    constraint FK_COMPRA_PRODUTO foreign key (ID_Prod) references PRODUTO(id_prod),
-    constraint FK_COMPRA_COMPRADOR foreign key (CPF_comprador) references COMPRADOR(cpf)
+CREATE TABLE local_venda (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL,
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL
 );
 
-CREATE INDEX idx_compra_data ON compra(data);
-CREATE INDEX idx_ap_cpf_comprador ON alimentos_preferidos(cpf_comprador);
+CREATE TABLE vendedor_local_venda (
+    vendedor_usuario_id INT NOT NULL,
+    local_venda_id INT NOT NULL,
+    CONSTRAINT pk_vendedor_local PRIMARY KEY (vendedor_usuario_id, local_venda_id),
+    CONSTRAINT fk_vlv_vendedor FOREIGN KEY (vendedor_usuario_id) REFERENCES vendedor(usuario_id) ON DELETE CASCADE,
+    CONSTRAINT fk_vlv_local FOREIGN KEY (local_venda_id) REFERENCES local_venda(id) ON DELETE CASCADE
+);
+
+-- #####################################################################
+-- # ÍNDICES PARA OTIMIZAÇÃO DE CONSULTAS
+-- #####################################################################
+
+-- Índices para tabelas de produtos e categorias
+CREATE INDEX idx_produto_vendedor_id ON produto(vendedor_usuario_id);
+CREATE INDEX idx_pc_produto_id ON produto_categoria(produto_id);
+CREATE INDEX idx_pc_categoria_id ON produto_categoria(categoria_id);
+
+-- Índices para tabelas de compras
+CREATE INDEX idx_compra_comprador_id ON compra(comprador_usuario_id);
+CREATE INDEX idx_compra_data ON compra(data_compra);
+CREATE INDEX idx_cp_compra_id ON compra_produto(compra_id);
+CREATE INDEX idx_cp_produto_id ON compra_produto(produto_id);
+
+-- Índices para tabelas complementares
+CREATE INDEX idx_ap_comprador_id ON alimentos_preferidos(comprador_usuario_id);
+CREATE INDEX idx_ap_categoria_id ON alimentos_preferidos(categoria_id);
+CREATE INDEX idx_fp_vendedor_id ON forma_pagamento(vendedor_usuario_id);
+CREATE INDEX idx_vlv_vendedor_id ON vendedor_local_venda(vendedor_usuario_id);
+CREATE INDEX idx_vlv_local_id ON vendedor_local_venda(local_venda_id);
