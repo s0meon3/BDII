@@ -1,6 +1,6 @@
 package com.snackEach.app.service;
 
-import com.snackEach.app.dto.RegisterDTO;
+import com.snackEach.app.dto.RegisterRequestDTO;
 import com.snackEach.app.model.*;
 import com.snackEach.app.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,7 +20,7 @@ public class UsuarioService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Object registerUsuario(RegisterDTO request){
+    public Object registerUsuario(RegisterRequestDTO request){
         String senhaCriptografada = passwordEncoder.encode(request.senha());
 
         Usuario novoUsuario = new Usuario(request.nome(), request.cpf(), request.curso(), request.email(), senhaCriptografada, request.tipoUsuario());

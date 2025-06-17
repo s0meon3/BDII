@@ -1,6 +1,7 @@
 package com.snackEach.app.controller;
 
-import com.snackEach.app.dto.RegisterDTO;
+import com.snackEach.app.dto.RegisterRequestDTO;
+import com.snackEach.app.dto.RegisterResponseDTO;
 import com.snackEach.app.model.*;
 import com.snackEach.app.security.JwtUtil;
 import com.snackEach.app.service.*;
@@ -26,28 +27,44 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterDTO request) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequestDTO request) {
         Object result = authService.register(request);
 
         if (result instanceof Vendedor vendedor) {
-            return ResponseEntity.ok(Map.of(
-                    "id", vendedor.getId(),
-                    "email", vendedor.getUsuario().getEmail(),
-                    "tipoUsuario", vendedor.getUsuario().getTipoUsuario().name(),
-                    "nomeTenda", vendedor.getNomeTenda()
+            return ResponseEntity.ok(new RegisterResponseDTO(
+                    vendedor.getId(),
+                    vendedor.getUsuario().getEmail(),
+                    vendedor.getUsuario().getTipoUsuario().name(),
+                    vendedor.getNomeTenda(),
+                    null, // outros campos conforme necessário
+                    null,
+                    null,
+                    null,
+                    null
             ));
         } else if (result instanceof Admin admin) {
-            return ResponseEntity.ok(Map.of(
-                    "id", admin.getId(),
-                    "email", admin.getUsuario().getEmail(),
-                    "tipoUsuario", admin.getUsuario().getTipoUsuario().name()
+            return ResponseEntity.ok(new RegisterResponseDTO(
+                    admin.getId(),
+                    admin.getUsuario().getEmail(),
+                    admin.getUsuario().getTipoUsuario().name(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
             ));
         } else if (result instanceof Comprador comprador) {
-            return ResponseEntity.ok(Map.of(
-                    "id", comprador.getId(),
-                    "email", comprador.getUsuario().getEmail(),
-                    "tipoUsuario", comprador.getUsuario().getTipoUsuario().name(),
-                    "dinheiroDisponivel", comprador.getDinheiroDisponivel()
+            return ResponseEntity.ok(new RegisterResponseDTO(
+                    comprador.getId(),
+                    comprador.getUsuario().getEmail(),
+                    comprador.getUsuario().getTipoUsuario().name(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    comprador.getDinheiroDisponivel()
             ));
         }
         return ResponseEntity.badRequest().build();

@@ -6,7 +6,7 @@ import com.snackEach.app.model.UsuarioTipo;
 import java.time.LocalTime;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record RegisterDTO(
+public record RegisterRequestDTO(
         String cpf,
         String nome,
         String email,

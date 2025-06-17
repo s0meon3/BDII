@@ -1,7 +1,7 @@
 
 package com.snackEach.app.service;
 
-import com.snackEach.app.dto.RegisterDTO;
+import com.snackEach.app.dto.RegisterRequestDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +16,7 @@ public class AuthService {
     }
 
     @Transactional
-    public Object register(RegisterDTO request) {
+    public Object register(RegisterRequestDTO request) {
         return usuarioService.registerUsuario(request);
     }
 }
