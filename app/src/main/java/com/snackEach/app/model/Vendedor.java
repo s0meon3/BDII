@@ -1,6 +1,9 @@
 package com.snackEach.app.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -9,6 +12,9 @@ import java.time.LocalTime;
 
 @Entity
 @Table(name = "vendedor")
+@Setter
+@Getter
+@NoArgsConstructor
 public class Vendedor {
     @Id
     @Column(name = "usuario_id", nullable = false)
@@ -37,59 +43,11 @@ public class Vendedor {
     @Column(name = "ativo", nullable = false)
     private Boolean ativo = false;
 
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public Usuario getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
-
-    public String getNomeTenda() {
-        return nomeTenda;
-    }
-
-    public void setNomeTenda(String nomeTenda) {
+    public Vendedor(String nomeTenda, LocalTime horarioInicio, LocalTime horarioFim, Boolean fazEntrega, Boolean ativo){
         this.nomeTenda = nomeTenda;
-    }
-
-    public LocalTime getHorarioInicio() {
-        return horarioInicio;
-    }
-
-    public void setHorarioInicio(LocalTime horarioInicio) {
         this.horarioInicio = horarioInicio;
-    }
-
-    public LocalTime getHorarioFim() {
-        return horarioFim;
-    }
-
-    public void setHorarioFim(LocalTime horarioFim) {
         this.horarioFim = horarioFim;
-    }
-
-    public Boolean getFazEntrega() {
-        return fazEntrega;
-    }
-
-    public void setFazEntrega(Boolean fazEntrega) {
         this.fazEntrega = fazEntrega;
-    }
-
-    public Boolean getAtivo() {
-        return ativo;
-    }
-
-    public void setAtivo(Boolean ativo) {
         this.ativo = ativo;
     }
 

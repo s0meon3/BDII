@@ -1,6 +1,9 @@
 package com.snackEach.app.model;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum UsuarioTipo {
     ADMIN("admin"),
     COMPRADOR("comprador"),
@@ -12,13 +15,15 @@ public enum UsuarioTipo {
         this.tipo = tipo;
     }
 
+    @JsonValue
     public String getTipo() {
         return tipo;
     }
 
+    @JsonCreator
     public static UsuarioTipo fromValor(String valor) {
         for (UsuarioTipo tipo : values()) {
-            if (tipo.tipo.equalsIgnoreCase(valor)) {
+            if (tipo.tipo.equalsIgnoreCase(valor) || tipo.name().equalsIgnoreCase(valor)) {
                 return tipo;
             }
         }

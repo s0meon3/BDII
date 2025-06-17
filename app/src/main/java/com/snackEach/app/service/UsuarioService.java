@@ -1,9 +1,8 @@
 package com.snackEach.app.service;
 
-import com.snackEach.app.model.Usuario;
-import com.snackEach.app.model.UsuarioTipo;
+import com.snackEach.app.dto.RegisterDTO;
+import com.snackEach.app.model.*;
 import com.snackEach.app.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -14,17 +13,40 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public Usuario registerUsuario(String cpf, String nome, String email, String senha, String curso, UsuarioTipo tipoUsuario){
-        String senhaCriptografada = passwordEncoder.encode(senha);
-        Usuario novoUsuario = new Usuario(nome, cpf, curso, email, senhaCriptografada, tipoUsuario);
-        return usuarioRepository.save(novoUsuario);
+    public Object registerUsuario(RegisterDTO request){
+        String senhaCriptografada = passwordEncoder.encode(request.senha());
+
+        Usuario novoUsuario = new Usuario(request.nome(), request.cpf(), request.curso(), request.email(), senhaCriptografada, request.tipoUsuario());
+        switch (request.tipoUsuario()) {
+            case COMPRADOR:
+                Comprador novoComprador = new Comprador();
+                novoComprador.setUsuario(novoUsuario);
+                novoUsuario.setComprador(novoComprador);
+                usuarioRepository.save(novoUsuario);
+                return novoComprador;
+            case VENDEDOR:
+                Vendedor novoVendedor = new Vendedor(request.nomeTenda(), request.horarioInicio(), request.horarioFim(), request.fazEntrega(), request.ativo());
+                novoVendedor.setId(novoUsuario.getId());
+                novoVendedor.setUsuario(novoUsuario);
+                novoUsuario.setVendedor(novoVendedor);
+                usuarioRepository.save(novoUsuario);
+                return novoVendedor;
+            case ADMIN:
+                Admin novoAdmin = new Admin();
+                novoAdmin.setUsuario(novoUsuario);
+                novoUsuario.setAdmin(novoAdmin);
+                usuarioRepository.save(novoUsuario);
+                return novoAdmin;
+            default:
+                throw new IllegalArgumentException("Tipo de usuário inválido");
+        }
     }
 
     public Optional<Usuario> findUsuarioByEmail(String email){

@@ -1,10 +1,9 @@
 package com.snackEach.app.controller;
 
-import com.snackEach.app.model.Usuario;
-import com.snackEach.app.model.UsuarioTipo;
+import com.snackEach.app.dto.RegisterDTO;
+import com.snackEach.app.model.*;
 import com.snackEach.app.security.JwtUtil;
-import com.snackEach.app.service.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.snackEach.app.service.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -16,17 +15,42 @@ import java.util.Optional;
 @RequestMapping("/auth")
 public class AuthController {
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public AuthController(UsuarioService usuarioService, PasswordEncoder passwordEncoder, AuthService authService) {
+        this.usuarioService = usuarioService;
+        this.passwordEncoder = passwordEncoder;
+        this.authService = authService;
+    }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
-        Usuario usuario = usuarioService.registerUsuario(request.get("cpf"), request.get("nome"), request.get("email"),
-                request.get("senha"), request.get("curso"), UsuarioTipo.fromValor(request.get("tipoUsuario")));
-        return ResponseEntity.ok(usuario);
+    public ResponseEntity<?> register(@RequestBody RegisterDTO request) {
+        Object result = authService.register(request);
+
+        if (result instanceof Vendedor vendedor) {
+            return ResponseEntity.ok(Map.of(
+                    "id", vendedor.getId(),
+                    "email", vendedor.getUsuario().getEmail(),
+                    "tipoUsuario", vendedor.getUsuario().getTipoUsuario().name(),
+                    "nomeTenda", vendedor.getNomeTenda()
+            ));
+        } else if (result instanceof Admin admin) {
+            return ResponseEntity.ok(Map.of(
+                    "id", admin.getId(),
+                    "email", admin.getUsuario().getEmail(),
+                    "tipoUsuario", admin.getUsuario().getTipoUsuario().name()
+            ));
+        } else if (result instanceof Comprador comprador) {
+            return ResponseEntity.ok(Map.of(
+                    "id", comprador.getId(),
+                    "email", comprador.getUsuario().getEmail(),
+                    "tipoUsuario", comprador.getUsuario().getTipoUsuario().name(),
+                    "dinheiroDisponivel", comprador.getDinheiroDisponivel()
+            ));
+        }
+        return ResponseEntity.badRequest().build();
     }
 
     @PostMapping("/login")
