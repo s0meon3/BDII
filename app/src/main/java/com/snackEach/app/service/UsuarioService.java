@@ -5,6 +5,7 @@ import com.snackEach.app.dto.UsuarioPerfilDTO;
 import com.snackEach.app.dto.UsuarioUpdateDTO;
 import com.snackEach.app.model.*;
 import com.snackEach.app.repository.UsuarioRepository;
+import org.apache.coyote.BadRequestException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +23,12 @@ public class UsuarioService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Object registerUsuario(RegisterRequestDTO request){
+    public Object registerUsuario(RegisterRequestDTO request) throws BadRequestException {
         String senhaCriptografada = passwordEncoder.encode(request.senha());
+
+        if (request.email() == null || request.senha() == null) {
+            throw new BadRequestException("Email e senha são obrigatórios");
+        }
 
         Usuario novoUsuario = new Usuario(request.nome(), request.cpf(), request.curso(), request.email(), senhaCriptografada, request.tipoUsuario());
         switch (request.tipoUsuario()) {

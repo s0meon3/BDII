@@ -5,6 +5,7 @@ import com.snackEach.app.dto.RegisterResponseDTO;
 import com.snackEach.app.model.*;
 import com.snackEach.app.security.JwtUtil;
 import com.snackEach.app.service.*;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequestDTO request) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequestDTO request) throws BadRequestException {
         Object result = authService.register(request);
 
         if (result instanceof Vendedor vendedor) {
@@ -71,8 +72,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> request) throws BadRequestException {
         Optional<Usuario> usuarioOpt = usuarioService.findUsuarioByEmail(request.get("email"));
+
+        if (request.get("email") == null || request.get("senha") == null) {
+            throw new BadRequestException("Email e senha são obrigatórios");
+        }
 
         if (usuarioOpt.isPresent()) {
             Usuario usuario = usuarioOpt.get();
