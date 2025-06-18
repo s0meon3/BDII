@@ -1,6 +1,8 @@
 package com.snackEach.app.service;
 
 import com.snackEach.app.dto.RegisterRequestDTO;
+import com.snackEach.app.dto.UsuarioPerfilDTO;
+import com.snackEach.app.dto.UsuarioUpdateDTO;
 import com.snackEach.app.model.*;
 import com.snackEach.app.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,6 +49,23 @@ public class UsuarioService {
             default:
                 throw new IllegalArgumentException("Tipo de usuário inválido");
         }
+    }
+
+    public UsuarioPerfilDTO getUsuarioProfile(String emailDoUsuario) {
+        Usuario usuario = usuarioRepository.findByEmail(emailDoUsuario).orElseThrow();
+        return new UsuarioPerfilDTO(usuario.getNome(), usuario.getCpf(), usuario.getCurso(), usuario.getEmail());
+    }
+
+    public UsuarioPerfilDTO updateUsuarioProfile(String emailDoUsuario, UsuarioUpdateDTO updateDTO) {
+            Usuario usuario = usuarioRepository.findByEmail(emailDoUsuario).orElseThrow();
+
+            usuario.setNome(updateDTO.getNome());
+            usuario.setCurso(updateDTO.getCurso());
+            if (updateDTO.getSenha() != null && !updateDTO.getSenha().isEmpty()) {
+                usuario.setSenhaHash(passwordEncoder.encode(updateDTO.getSenha()));
+            }
+            usuarioRepository.save(usuario);
+            return new UsuarioPerfilDTO(usuario.getNome(), usuario.getCpf(), usuario.getCurso(), usuario.getEmail());
     }
 
     public Optional<Usuario> findUsuarioByEmail(String email){

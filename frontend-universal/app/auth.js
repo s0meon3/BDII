@@ -7,7 +7,6 @@ import { useRouter } from 'expo-router';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// IMPORTANTE: Use o IP da sua máquina. localhost não funciona no celular.
 const API_URL = 'http://192.168.0.13:8080';
 
 // Componente para o formulário de Login
@@ -28,10 +27,6 @@ const LoginForm = ({ onAuthSuccess }) => {
     return (
         <>
             <Text style={styles.formTitle}>Acesse sua conta</Text>
-            <TouchableOpacity style={styles.googleButton}>
-                {/* Adicione um ícone do Google aqui depois */}
-                <Text style={styles.googleButtonText}>Continuar com o Google</Text>
-            </TouchableOpacity>
             <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#aaa" keyboardType="email-address" value={email} onChangeText={setEmail} />
             <TextInput style={styles.input} placeholder="Senha" placeholderTextColor="#aaa" secureTextEntry value={senha} onChangeText={setSenha} />
             <TouchableOpacity style={styles.button} onPress={handleLogin}>
@@ -68,9 +63,6 @@ const RegisterForm = ({ onSwitchToLogin }) => {
     return (
         <ScrollView>
             <Text style={styles.formTitle}>Cadastre sua conta</Text>
-            <TouchableOpacity style={styles.googleButton}>
-                <Text style={styles.googleButtonText}>Continuar com o Google</Text>
-            </TouchableOpacity>
             <TextInput style={styles.input} placeholder="Nome" placeholderTextColor="#aaa" value={formData.nome} onChangeText={v => handleChange('nome', v)} />
             <TextInput style={styles.input} placeholder="CPF" placeholderTextColor="#aaa" value={formData.cpf} onChangeText={v => handleChange('cpf', v)} />
             <TextInput style={styles.input} placeholder="Curso" placeholderTextColor="#aaa" value={formData.curso} onChangeText={v => handleChange('curso', v)} />
@@ -92,7 +84,7 @@ export default function AuthScreen() {
 
     const handleAuthSuccess = () => {
         // Navega para a tela principal do app após login/registro bem-sucedido
-        router.replace('/(tabs)/home'); // Ajuste a rota se for diferente
+        router.replace('/usuario/profile');
     };
 
     return (

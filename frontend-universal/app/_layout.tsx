@@ -1,29 +1,39 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+    return (
+        <>
+            {/* O Stack vai gerenciar todas as telas do seu app */}
+            <Stack screenOptions={{
+                // Você pode definir estilos globais para o header aqui
+                headerStyle: {
+                    backgroundColor: '#F57C00', // Cor de fundo do header
+                },
+                headerTintColor: '#fff', // Cor do texto e ícones do header
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }}>
+                {/* A tela 'index' apenas redireciona, então não precisa de um título */}
+                <Stack.Screen name="index" options={{ headerShown: false }} />
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
+                {/* Tela de autenticação */}
+                <Stack.Screen name="auth" options={{ headerShown: false }} />
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+                {/* Tela de perfil do usuário */}
+                <Stack.Screen
+                    name="usuario/profile"
+                    options={{
+                        title: 'Meu Perfil', // Título que aparecerá no header
+                    }}
+                />
+
+                {/* Tela de 'não encontrado' que o Expo Router usa por padrão */}
+                <Stack.Screen name="+not-found" />
+            </Stack>
+            <StatusBar style="light" />
+        </>
+    );
 }
