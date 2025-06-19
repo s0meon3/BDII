@@ -43,7 +43,7 @@ public class Vendedor {
 
     @ColumnDefault("true")
     @Column(name = "ativo", nullable = false)
-    private Boolean ativo = false;
+    private Boolean ativo = true;
 
     @Column(name = "telefone", length = 20)
     private String telefone;
