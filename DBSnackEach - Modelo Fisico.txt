@@ -21,6 +21,7 @@ CREATE TABLE vendedor (
     horario_fim TIME,
     faz_entrega BOOLEAN NOT NULL DEFAULT FALSE,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    telefone VARCHAR(20) NOT NULL;
     CONSTRAINT fk_vendedor_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
 );
 
@@ -50,6 +51,7 @@ CREATE TABLE produto (
     nome VARCHAR(100) NOT NULL,
     descricao TEXT,
     preco DECIMAL(10, 2) NOT NULL,
+    image_url TEXT,
     CONSTRAINT fk_produto_vendedor FOREIGN KEY (vendedor_usuario_id) REFERENCES vendedor(usuario_id) ON DELETE SET NULL
 );
 

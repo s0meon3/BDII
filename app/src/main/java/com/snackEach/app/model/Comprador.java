@@ -8,6 +8,8 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -27,6 +29,12 @@ public class Comprador {
     @ColumnDefault("0.00")
     @Column(name = "dinheiro_disponivel", nullable = false, precision = 10, scale = 2)
     private BigDecimal dinheiroDisponivel;
+
+    @OneToMany(mappedBy = "compradorUsuario")
+    private Set<AlimentosPreferido> alimentosPreferidos = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "compradorUsuario")
+    private Set<Compra> compras = new LinkedHashSet<>();
 
     public Comprador (){
         this.dinheiroDisponivel = BigDecimal.ZERO;

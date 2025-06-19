@@ -84,7 +84,7 @@ export default function AuthScreen() {
 
     const handleAuthSuccess = () => {
         // Navega para a tela principal do app após login/registro bem-sucedido
-        router.replace('/usuario/profile');
+        router.replace('/produtos/home');
     };
 
     return (

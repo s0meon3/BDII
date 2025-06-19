@@ -18,5 +18,6 @@ public record RegisterRequestDTO(
         LocalTime horarioInicio,
         LocalTime horarioFim,
         Boolean fazEntrega,
-        Boolean ativo
+        Boolean ativo,
+        String telefone
 ) {}

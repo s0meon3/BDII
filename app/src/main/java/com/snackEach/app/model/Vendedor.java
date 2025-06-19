@@ -9,6 +9,8 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "vendedor")
@@ -43,12 +45,28 @@ public class Vendedor {
     @Column(name = "ativo", nullable = false)
     private Boolean ativo = false;
 
-    public Vendedor(String nomeTenda, LocalTime horarioInicio, LocalTime horarioFim, Boolean fazEntrega, Boolean ativo){
+    @Column(name = "telefone", length = 20)
+    private String telefone;
+
+    @OneToMany(mappedBy = "vendedorUsuario")
+    private Set<FormaPagamento> formaPagamentos = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "vendedorUsuario")
+    private Set<Produto> produtos = new LinkedHashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "vendedor_local_venda",
+            joinColumns = @JoinColumn(name = "vendedor_usuario_id"),
+            inverseJoinColumns = @JoinColumn(name = "local_venda_id"))
+    private Set<LocalVenda> localVendas = new LinkedHashSet<>();
+
+    public Vendedor(String nomeTenda, LocalTime horarioInicio, LocalTime horarioFim, Boolean fazEntrega, Boolean ativo, String telefone){
         this.nomeTenda = nomeTenda;
         this.horarioInicio = horarioInicio;
         this.horarioFim = horarioFim;
         this.fazEntrega = fazEntrega;
         this.ativo = ativo;
+        this.telefone = telefone;
     }
 
 }

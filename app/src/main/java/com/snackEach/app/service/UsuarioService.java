@@ -39,7 +39,7 @@ public class UsuarioService {
                 usuarioRepository.save(novoUsuario);
                 return novoComprador;
             case VENDEDOR:
-                Vendedor novoVendedor = new Vendedor(request.nomeTenda(), request.horarioInicio(), request.horarioFim(), request.fazEntrega(), request.ativo());
+                Vendedor novoVendedor = new Vendedor(request.nomeTenda(), request.horarioInicio(), request.horarioFim(), request.fazEntrega(), request.ativo(), request.telefone());
                 novoVendedor.setId(novoUsuario.getId());
                 novoVendedor.setUsuario(novoUsuario);
                 novoUsuario.setVendedor(novoVendedor);
