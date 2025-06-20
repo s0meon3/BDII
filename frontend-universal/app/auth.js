@@ -19,7 +19,7 @@ const LoginForm = ({ onAuthSuccess }) => {
         try {
             const response = await axios.post(`${API_URL}/auth/login`, { email, senha });
             const { token, vendedorID } = response.data;
-            
+
             if (token) {
                 await AsyncStorage.setItem('userToken', token);
                 if (vendedorID) {

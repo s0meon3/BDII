@@ -87,7 +87,10 @@ public class AuthController {
             if (passwordEncoder.matches(request.get("senha"), usuario.getSenhaHash())) {
                 String token = JwtUtil.generateToken(usuario.getEmail());
                 String userID = usuario.getId().toString();
-                String vendedorID = usuario.getVendedor().getId().toString();
+                String vendedorID = "";
+                if (usuario.getTipoUsuario() == UsuarioTipo.VENDEDOR) {
+                    vendedorID = usuario.getVendedor().getId().toString();
+                }
                 // Crie um mapa para a resposta
                 Map<String, String> response = new HashMap<>();
                 response.put("token", token);
