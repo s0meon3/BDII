@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -84,7 +85,14 @@ public class AuthController {
 
             if (passwordEncoder.matches(request.get("senha"), usuario.getSenhaHash())) {
                 String token = JwtUtil.generateToken(usuario.getEmail());
-                return ResponseEntity.ok(Map.of("token", token));
+                String userID = usuario.getId().toString();
+                // Crie um mapa para a resposta
+                Map<String, String> response = new HashMap<>();
+                response.put("token", token);
+                response.put("userId", userID);
+
+                // Retorne o ResponseEntity com o mapa
+                return ResponseEntity.ok(response);
             }
         }
 

@@ -7,22 +7,39 @@ import { useRouter } from 'expo-router';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://192.168.0.13:8080';
+const API_URL = 'http://127.0.0.1:8080';
 
 // Componente para o formulário de Login
 const LoginForm = ({ onAuthSuccess }) => {
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
 
+    // --- INÍCIO DA MODIFICAÇÃO ---
     const handleLogin = async () => {
         try {
             const response = await axios.post(`${API_URL}/auth/login`, { email, senha });
-            await AsyncStorage.setItem('userToken', response.data.token);
-            onAuthSuccess();
+            // Assumimos que a resposta da API contém o token e o ID do usuário
+            // Ex: { "token": "...", "userId": 1 }
+            const { token, userId } = response.data;
+
+            if (token && userId) {
+                // Salva o token para autenticação e o userId para outras operações (como criar produto)
+                await AsyncStorage.setItem('userToken', token);
+                await AsyncStorage.setItem('userId', String(userId)); // AsyncStorage armazena apenas strings
+
+                Alert.alert('Sucesso', 'Conectado com sucesso!');
+                onAuthSuccess();
+            } else {
+                // Lança um erro se a resposta da API não tiver os dados esperados
+                throw new Error('Token ou ID do usuário não retornado pelo servidor.');
+            }
+
         } catch (error) {
+            console.error("Erro no login:", error.response?.data || error.message);
             Alert.alert('Erro', 'Email ou senha inválidos.');
         }
     };
+    // --- FIM DA MODIFICAÇÃO ---
 
     return (
         <>
@@ -36,7 +53,7 @@ const LoginForm = ({ onAuthSuccess }) => {
     );
 };
 
-// Componente para o formulário de Cadastro
+// Componente para o formulário de Cadastro (sem alterações)
 const RegisterForm = ({ onSwitchToLogin }) => {
     const [formData, setFormData] = useState({
         nome: '', cpf: '', curso: '', email: '', senha: '', confirmarSenha: ''
@@ -50,7 +67,6 @@ const RegisterForm = ({ onSwitchToLogin }) => {
             return;
         }
         try {
-            // O backend espera 'tipoUsuario', vamos definir um padrão
             const payload = { ...formData, tipoUsuario: 'comprador' };
             await axios.post(`${API_URL}/auth/register`, payload);
             Alert.alert('Sucesso', 'Conta criada! Faça o login para continuar.');
@@ -77,13 +93,12 @@ const RegisterForm = ({ onSwitchToLogin }) => {
 };
 
 
-// Tela Principal de Autenticação
+// Tela Principal de Autenticação (sem alterações)
 export default function AuthScreen() {
-    const [activeTab, setActiveTab] = useState('login'); // 'login' ou 'cadastro'
+    const [activeTab, setActiveTab] = useState('login');
     const router = useRouter();
 
     const handleAuthSuccess = () => {
-        // Navega para a tela principal do app após login/registro bem-sucedido
         router.replace('/produtos/home');
     };
 
@@ -95,7 +110,6 @@ export default function AuthScreen() {
                 style={styles.container}
             >
                 <View style={styles.logoContainer}>
-                    {/* Substitua por sua logo. Por enquanto, um texto. */}
                     <View style={styles.logoBackground}>
                         <Text style={styles.logoText}>SnackEach</Text>
                     </View>
@@ -125,12 +139,12 @@ export default function AuthScreen() {
 }
 
 
-// Folha de Estilos
+// Folha de Estilos (sem alterações)
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: '#DD6B20' }, // Laranja mais escuro para a área segura
+    safeArea: { flex: 1, backgroundColor: '#DD6B20' },
     container: {
         flex: 1,
-        backgroundColor: '#F57C00', // Laranja principal de fundo
+        backgroundColor: '#F57C00',
         alignItems: 'center',
         paddingTop: 40,
     },
@@ -151,7 +165,7 @@ const styles = StyleSheet.create({
     },
     formContainer: {
         width: '90%',
-        backgroundColor: '#E65100', // Laranja mais escuro para o formulário
+        backgroundColor: '#E65100',
         borderRadius: 20,
         padding: 20,
         flex: 1,
@@ -163,12 +177,12 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     tabText: {
-        color: '#FFCCBC', // Cor para aba inativa
+        color: '#FFCCBC',
         fontSize: 18,
         paddingBottom: 5,
     },
     activeTabText: {
-        color: 'white', // Cor para aba ativa
+        color: 'white',
         fontWeight: 'bold',
     },
     tabUnderline: {

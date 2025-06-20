@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 
-const API_URL = 'http://192.168.0.13:8080';
+const API_URL = 'http://127.0.0.1:8080';
 
 const ProductCard = ({ product, onPress }) => {
     const categoryTag = product.categorias && product.categorias.length > 0 ? product.categorias[0].nome : null;
@@ -46,7 +46,6 @@ const ProductCard = ({ product, onPress }) => {
         </TouchableOpacity>
     );
 };
-
 
 export default function ProductsScreen() {
     const [allProducts, setAllProducts] = useState([]);
@@ -109,6 +108,11 @@ export default function ProductsScreen() {
         router.push(`/produtos/${productId}`);
     };
 
+    // Função para navegar para a tela de adicionar novo produto
+    const handleAddProductPress = () => {
+        router.push('/produtos/new');
+    };
+
     if (isLoading) {
         return (
             <SafeAreaView style={styles.safeArea}>
@@ -131,6 +135,12 @@ export default function ProductsScreen() {
                     />
                     <FontAwesome name="search" size={20} color="#777" style={styles.searchIcon} />
                 </View>
+
+                {/* Botão para Adicionar Novo Produto */}
+                <TouchableOpacity style={styles.addButton} onPress={handleAddProductPress}>
+                    <FontAwesome name="plus-circle" size={24} color="white" />
+                    <Text style={styles.addButtonText}>Adicionar Novo Produto</Text>
+                </TouchableOpacity>
 
                 <FlatList
                     data={filteredProducts}
@@ -174,6 +184,29 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     searchIcon: {
+        marginLeft: 10,
+    },
+    // Novos estilos para o botão "Adicionar Novo Produto"
+    addButton: {
+        flexDirection: 'row',
+        backgroundColor: '#1E88E5', // Um tom de azul para o botão
+        borderRadius: 30,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        marginHorizontal: 16,
+        marginBottom: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    addButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
         marginLeft: 10,
     },
     card: {
