@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView,
-    StatusBar, Alert, KeyboardAvoidingView, Platform, ScrollView
+    StatusBar, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 
-// URL da sua API. Ajuste se necessário.
 const API_URL = 'http://127.0.0.1:8080';
-
 
 const FormularioProduto = ({ router }) => {
     const [formData, setFormData] = useState({
@@ -18,14 +17,44 @@ const FormularioProduto = ({ router }) => {
         preco: '',
         imageUrl: '',
     });
+    const [categorias, setCategorias] = useState([]);
+    const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+
+    useEffect(() => {
+        const fetchCategorias = async () => {
+            try {
+                const token = await AsyncStorage.getItem('userToken');
+                if (!token) {
+                    Alert.alert("Erro", "Você precisa estar logado para acessar as categorias.");
+                    setIsLoadingCategories(false);
+                    return;
+                }
+                const response = await axios.get(`${API_URL}/categorias`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setCategorias(response.data);
+                if (response.data.length > 0) {
+                    setCategoriaSelecionada(response.data[0].id);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar categorias:', error.response?.data || error.message);
+                Alert.alert('Erro', 'Não foi possível carregar as categorias.');
+            } finally {
+                setIsLoadingCategories(false);
+            }
+        };
+
+        fetchCategorias();
+    }, []);
 
     const handleChange = (name, value) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleCadastroProduto = async () => {
-        if (!formData.nome || !formData.preco) {
-            Alert.alert('Erro', 'Os campos "Nome" e "Preço" são obrigatórios.');
+        if (!formData.nome || !formData.preco || categoriaSelecionada === null) {
+            Alert.alert('Erro', 'Os campos "Nome", "Preço" e "Categoria" são obrigatórios.');
             return;
         }
 
@@ -38,21 +67,18 @@ const FormularioProduto = ({ router }) => {
                 return;
             }
 
-            // Payload ajustado para corresponder exatamente ao ProdutoCreateUpdateDTO
             const payload = {
                 nome: formData.nome,
                 descricao: formData.descricao,
                 imageUrl: formData.imageUrl,
-                preco: parseFloat(formData.preco.replace(',', '.')), // Garante que o preço seja um número
-                vendedorUsuarioId: parseInt(vendedorId, 10), // Ajustado para enviar apenas o ID
-                categoriaIds: [1], // Adicionado conforme solicitado, com valor fixo
+                preco: parseFloat(formData.preco.replace(',', '.')),
+                vendedorUsuarioId: parseInt(vendedorId, 10),
+                categoriaIds: [categoriaSelecionada],
             };
-
-            // Enviando a requisição para o endpoint de produtos
-            // A URL `/produtos` geralmente corresponde ao método do Controller que recebe o DTO
+            console.log(payload)
             await axios.post(`${API_URL}/produtos`, payload, {
-                                                              headers: { 'Authorization': `Bearer ${token}` }
-                                                              });
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
             Alert.alert('Sucesso', 'Produto cadastrado com sucesso!');
             router.back();
@@ -64,7 +90,7 @@ const FormularioProduto = ({ router }) => {
     };
 
     return (
-        <ScrollView>
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <Text style={styles.formTitle}>Cadastrar Novo Produto</Text>
 
             <TextInput
@@ -98,6 +124,27 @@ const FormularioProduto = ({ router }) => {
                 onChangeText={v => handleChange('imageUrl', v)}
             />
 
+            {isLoadingCategories ? (
+                <ActivityIndicator size="large" color="#fff" />
+            ) : (
+                <View style={styles.pickerContainer}>
+                    <Picker
+                        selectedValue={categoriaSelecionada}
+                        onValueChange={(itemValue) => setCategoriaSelecionada(itemValue)}
+                        style={styles.picker}
+                        itemStyle={styles.pickerItem}
+                    >
+                        {categorias.length === 0 ? (
+                            <Picker.Item label="Nenhuma categoria disponível" value={null} />
+                        ) : (
+                            categorias.map((categoria) => (
+                                <Picker.Item key={categoria.id} label={categoria.nome} value={categoria.id} />
+                            ))
+                        )}
+                    </Picker>
+                </View>
+            )}
+
             <TouchableOpacity style={styles.button} onPress={handleCadastroProduto}>
                 <Text style={styles.buttonText}>Cadastrar Produto</Text>
             </TouchableOpacity>
@@ -105,7 +152,6 @@ const FormularioProduto = ({ router }) => {
     );
 };
 
-// --- Tela Principal de Cadastro de Produto ---
 export default function CadastroProdutoScreen() {
     const router = useRouter();
 
@@ -130,7 +176,6 @@ export default function CadastroProdutoScreen() {
     );
 }
 
-// --- Folha de Estilos (sem alterações) ---
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#DD6B20' },
     container: {
@@ -178,6 +223,24 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         color: '#333',
     },
+    pickerContainer: {
+            backgroundColor: 'white',
+            borderRadius: 30,
+            marginBottom: 15,
+            overflow: 'hidden',
+            borderWidth: 0, // Define a largura da borda
+            borderColor: 'white', // Define a cor da borda como branca
+        },
+        picker: {
+            height: 50,
+            width: '100%',
+            color: '#333',
+            backgroundColor: 'white',
+        },
+        pickerItem: {
+            color: '#333',
+            fontSize: 16,
+        },
     button: {
         backgroundColor: 'white',
         borderRadius: 30,
@@ -190,4 +253,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
+    scrollViewContent: {
+        flexGrow: 1,
+        paddingBottom: 20,
+    }
 });

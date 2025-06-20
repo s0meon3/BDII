@@ -35,7 +35,7 @@ public class CategoriaController {
     public ResponseEntity<List<CategoriaDTO>> listarCategorias() {
         List<CategoriaDTO> categorias = categoriaRepository.findAll()
                 .stream()
-                .map(cat -> new CategoriaDTO(cat.getNome()))
+                .map(cat -> new CategoriaDTO(cat.getId(), cat.getNome()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(categorias);
     }
