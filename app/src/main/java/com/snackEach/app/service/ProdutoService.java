@@ -32,11 +32,7 @@ public class ProdutoService {
     }
 
     public ProdutoDetalheDTO buscarPorId(Integer id) {
-        System.out.println("--- DEBUG: Entrando no ProdutoService.buscarPorId ---");
-
         Produto produto = produtoRepository.findByIdWithAllDetails(id).orElseThrow(() -> new RuntimeException("Produto não encontrado com findByIdWithAllDetails"));
-
-        System.out.println("--- DEBUG: Produto encontrado com sucesso pelo método correto. Nome: " + produto.getNome());
 
         return toDetalheDTO(produto);
     }

@@ -2,6 +2,7 @@ package com.snackEach.app.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -38,7 +39,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll().anyRequest().authenticated())
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/categorias/**").hasAnyRole("ADMIN", "VENDEDOR")
+                        .requestMatchers("/usuarios/**").authenticated()
+                        .requestMatchers("/produtos/procurar").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/produtos/{id}").authenticated()
+                        .requestMatchers("/produtos/**").hasAnyRole("ADMIN", "VENDEDOR")
+                        .anyRequest().authenticated())
                 .addFilterBefore(this.jwtAutFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
