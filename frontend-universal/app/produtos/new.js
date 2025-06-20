@@ -60,13 +60,14 @@ const FormularioProduto = ({ router }) => {
 
         try {
             const vendedorId = await AsyncStorage.getItem('vendedorId');
+            console.log(vendedorId)
             const token = await AsyncStorage.getItem('userToken');
 
             if (!vendedorId) {
                 Alert.alert('Erro de Autenticação', 'Não foi possível identificar o vendedor. Por favor, faça login novamente.');
                 return;
             }
-
+            console.log(vendedorId)
             const payload = {
                 nome: formData.nome,
                 descricao: formData.descricao,

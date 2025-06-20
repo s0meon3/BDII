@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -38,11 +39,11 @@ public class AuthController {
                     vendedor.getUsuario().getEmail(),
                     vendedor.getUsuario().getTipoUsuario().name(),
                     vendedor.getNomeTenda(),
-                    null, // outros campos conforme necessário
-                    null,
-                    null,
-                    null,
-                    null
+                    vendedor.getHorarioInicio().toString(), // outros campos conforme necessário
+                    vendedor.getHorarioFim().toString(),
+                    vendedor.getFazEntrega(),
+                    true,
+                    new BigDecimal("0.0")
             ));
         } else if (result instanceof Admin admin) {
             return ResponseEntity.ok(new RegisterResponseDTO(
@@ -91,7 +92,7 @@ public class AuthController {
                 Map<String, String> response = new HashMap<>();
                 response.put("token", token);
                 response.put("userId", userID);
-                response.put("vendedorId", vendedorID);
+                response.put("vendedorID", vendedorID);
 
                 // Retorne o ResponseEntity com o mapa
                 return ResponseEntity.ok(response);
