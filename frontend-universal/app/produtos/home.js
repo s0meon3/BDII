@@ -113,6 +113,11 @@ export default function ProductsScreen() {
         router.push('/produtos/new');
     };
 
+    // FUNÇÃO ADICIONADA: Navegar para a tela de adicionar nova categoria
+    const handleAddCategoryPress = () => {
+        router.push('/categorias/new');
+    };
+
     if (isLoading) {
         return (
             <SafeAreaView style={styles.safeArea}>
@@ -136,11 +141,20 @@ export default function ProductsScreen() {
                     <FontAwesome name="search" size={20} color="#777" style={styles.searchIcon} />
                 </View>
 
-                {/* Botão para Adicionar Novo Produto */}
-                <TouchableOpacity style={styles.addButton} onPress={handleAddProductPress}>
-                    <FontAwesome name="plus-circle" size={24} color="white" />
-                    <Text style={styles.addButtonText}>Adicionar Novo Produto</Text>
-                </TouchableOpacity>
+                {/* Botões para Adicionar */}
+                <View style={styles.buttonsContainer}>
+                    <TouchableOpacity style={styles.addButton} onPress={handleAddProductPress}>
+                        <FontAwesome name="plus-circle" size={24} color="white" />
+                        <Text style={styles.addButtonText}>Novo Produto</Text>
+                    </TouchableOpacity>
+
+                    {/* NOVO BOTÃO: Adicionar Nova Categoria */}
+                    <TouchableOpacity style={styles.addButton} onPress={handleAddCategoryPress}>
+                        <FontAwesome name="tags" size={24} color="white" />
+                        <Text style={styles.addButtonText}>Nova Categoria</Text>
+                    </TouchableOpacity>
+                </View>
+
 
                 <FlatList
                     data={filteredProducts}
@@ -186,15 +200,19 @@ const styles = StyleSheet.create({
     searchIcon: {
         marginLeft: 10,
     },
-    // Novos estilos para o botão "Adicionar Novo Produto"
+    // Contêiner para os botões de adicionar
+    buttonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around', // Distribui os botões uniformemente
+        marginHorizontal: 16,
+        marginBottom: 16,
+    },
     addButton: {
         flexDirection: 'row',
         backgroundColor: '#1E88E5', // Um tom de azul para o botão
         borderRadius: 30,
         paddingVertical: 12,
-        paddingHorizontal: 20,
-        marginHorizontal: 16,
-        marginBottom: 16,
+        paddingHorizontal: 15, // Ajustado para ter mais espaço em botões múltiplos
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#000',
@@ -202,12 +220,14 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 5,
+        flex: 1, // Faz com que os botões ocupem o espaço disponível
+        marginHorizontal: 5, // Espaçamento entre os botões
     },
     addButtonText: {
         color: 'white',
-        fontSize: 16,
+        fontSize: 14, // Fonte um pouco menor para caber em botões múltiplos
         fontWeight: 'bold',
-        marginLeft: 10,
+        marginLeft: 8, // Ajuste o espaçamento do ícone
     },
     card: {
         backgroundColor: '#A14900',

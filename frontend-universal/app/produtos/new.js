@@ -59,7 +59,7 @@ const FormularioProduto = ({ router }) => {
         }
 
         try {
-            const vendedorId = await AsyncStorage.getItem('userId');
+            const vendedorId = await AsyncStorage.getItem('vendedorId');
             const token = await AsyncStorage.getItem('userToken');
 
             if (!vendedorId) {

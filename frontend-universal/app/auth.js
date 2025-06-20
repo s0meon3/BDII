@@ -20,15 +20,20 @@ const LoginForm = ({ onAuthSuccess }) => {
             const response = await axios.post(`${API_URL}/auth/login`, { email, senha });
             // Assumimos que a resposta da API contém o token e o ID do usuário
             // Ex: { "token": "...", "userId": 1 }
-            const { token, userId } = response.data;
+            const { token, vendedorId } = response.data;
 
-            if (token && userId) {
+            if (token && vendedorId) {
                 // Salva o token para autenticação e o userId para outras operações (como criar produto)
                 await AsyncStorage.setItem('userToken', token);
-                await AsyncStorage.setItem('userId', String(userId)); // AsyncStorage armazena apenas strings
+                await AsyncStorage.setItem('vendedorId', String(vendedorId)); // AsyncStorage armazena apenas strings
 
                 Alert.alert('Sucesso', 'Conectado com sucesso!');
                 onAuthSuccess();
+            } else if (token) {
+                 await AsyncStorage.setItem('userToken', token);
+
+                 Alert.alert('Sucesso', 'Conectado com sucesso!');
+                 onAuthSuccess();
             } else {
                 // Lança um erro se a resposta da API não tiver os dados esperados
                 throw new Error('Token ou ID do usuário não retornado pelo servidor.');
