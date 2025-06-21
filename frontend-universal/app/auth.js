@@ -5,31 +5,25 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Picker } from '@react-native-picker/picker'; // Importar Picker
+import { Picker } from '@react-native-picker/picker';
+import { useAuth } from '@/context/authContext';
 
-const API_URL = 'http://127.0.0.1:8080';
+const API_URL = 'http://192.168.0.13:8080';
 
 // Componente para o formulário de Login (inalterado)
 const LoginForm = ({ onAuthSuccess }) => {
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
+    const { signIn } = useAuth();
 
     const handleLogin = async () => {
         try {
             const response = await axios.post(`${API_URL}/auth/login`, { email, senha });
-            const { token, vendedorID } = response.data;
 
-            if (token) {
-                await AsyncStorage.setItem('userToken', token);
-                if (vendedorID) {
-                    await AsyncStorage.setItem('vendedorId', String(vendedorID));
-                }
-                Alert.alert('Sucesso', 'Conectado com sucesso!');
-                onAuthSuccess();
-            } else {
-                throw new Error('Token não retornado pelo servidor.');
-            }
+            await signIn(response.data); // response.data contém { token, vendedorID }
+
+            Alert.alert('Sucesso', 'Conectado com sucesso!');
+            onAuthSuccess(); // Chama a função para navegar para a próxima tela
 
         } catch (error) {
             console.error("Erro no login:", error.response?.data || error.message);
@@ -264,7 +258,7 @@ export default function AuthScreen() {
     const router = useRouter();
 
     const handleAuthSuccess = () => {
-        router.replace('/produtos/home');
+        router.replace('/(tabs)/home');
     };
 
     return (

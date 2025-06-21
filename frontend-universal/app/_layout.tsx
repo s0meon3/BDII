@@ -1,39 +1,54 @@
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import {Stack} from 'expo-router';
 import 'react-native-reanimated';
+import {AuthProvider} from "@/context/authContext";
 
 export default function RootLayout() {
     return (
-        <>
-            {/* O Stack vai gerenciar todas as telas do seu app */}
+        <AuthProvider>
             <Stack screenOptions={{
-                // Você pode definir estilos globais para o header aqui
-                headerStyle: {
-                    backgroundColor: '#F57C00', // Cor de fundo do header
-                },
-                headerTintColor: '#fff', // Cor do texto e ícones do header
-                headerTitleStyle: {
-                    fontWeight: 'bold',
-                },
+                headerShown: false
             }}>
-                {/* A tela 'index' apenas redireciona, então não precisa de um título */}
-                <Stack.Screen name="index" options={{ headerShown: false }} />
+                {/* Tela de autenticação, não tem a barra de abas */}
+                <Stack.Screen name="auth" />
 
-                {/* Tela de autenticação */}
-                <Stack.Screen name="auth" options={{ headerShown: false }} />
+                <Stack.Screen name="index" />
+                <Stack.Screen name="+not-found" />
 
-                {/* Tela de perfil do usuário */}
+                {/* Rota que representa to.do o seu Tab Navigator */}
+                <Stack.Screen name="(tabs)" />
+
+                {/* A tela de detalhes do produto. Terá um header com botão de voltar. */}
                 <Stack.Screen
-                    name="usuario/profile"
+                    name="produtos/[id]"
                     options={{
-                        title: 'Meu Perfil', // Título que aparecerá no header
+                        headerShown: true, // Mostra o header nesta tela
+                        title: 'Detalhes do Produto',
+                        headerStyle: { backgroundColor: '#F57C00' },
+                        headerTintColor: 'white',
+                    }}
+                />
+                {/* A tela de criar categoria. Terá um header com botão de voltar. */}
+                <Stack.Screen
+                    name="categorias/new"
+                    options={{
+                        headerShown: true, // Mostra o header nesta tela
+                        title: 'Criar nova categoria',
+                        headerStyle: { backgroundColor: '#F57C00' },
+                        headerTintColor: 'white',
                     }}
                 />
 
-                {/* Tela de 'não encontrado' que o Expo Router usa por padrão */}
-                <Stack.Screen name="+not-found" />
+                {/* A tela de criar categoria. Terá um header com botão de voltar. */}
+                <Stack.Screen
+                    name="produtos/new"
+                    options={{
+                        headerShown: true, // Mostra o header nesta tela
+                        title: 'Criar novo produto',
+                        headerStyle: { backgroundColor: '#F57C00' },
+                        headerTintColor: 'white',
+                    }}
+                />
             </Stack>
-            <StatusBar style="light" />
-        </>
-    );
+        </AuthProvider>
+    )
 }

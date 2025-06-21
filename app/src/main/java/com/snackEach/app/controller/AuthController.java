@@ -85,7 +85,7 @@ public class AuthController {
             Usuario usuario = usuarioOpt.get();
 
             if (passwordEncoder.matches(request.get("senha"), usuario.getSenhaHash())) {
-                String token = JwtUtil.generateToken(usuario.getEmail());
+                String token = JwtUtil.generateToken(usuario.getEmail(), usuario.getTipoUsuario());
                 String userID = usuario.getId().toString();
                 String vendedorID = "";
                 if (usuario.getTipoUsuario() == UsuarioTipo.VENDEDOR) {

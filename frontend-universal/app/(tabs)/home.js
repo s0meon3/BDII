@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    View, Text, TextInput, StyleSheet, SafeAreaView,
-    StatusBar, Alert, FlatList, ActivityIndicator, Image,
-    TouchableOpacity
+    View, Text, StyleSheet, SafeAreaView,
+    Alert, FlatList, ActivityIndicator, Image,
+    TouchableOpacity, TextInput
 } from 'react-native';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useAuth } from '@/context/authContext';
 
-const API_URL = 'http://127.0.0.1:8080';
+const API_URL = 'http://192.168.0.13:8080';
 
 const ProductCard = ({ product, onPress }) => {
     const categoryTag = product.categorias && product.categorias.length > 0 ? product.categorias[0].nome : null;
@@ -48,34 +48,32 @@ const ProductCard = ({ product, onPress }) => {
 };
 
 export default function ProductsScreen() {
+    const { user, signOut } = useAuth();
     const [allProducts, setAllProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter(); // Hook para controlar a navegação
+    const router = useRouter();
 
-    const fetchProducts = async () => {
+
+    const fetchProducts = useCallback(async () => {
+        if (!user) { // Se o usuário ainda não carregou, espera
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
-
         try {
-            const token = await AsyncStorage.getItem('userToken');
-
-            if (!token) {
-                Alert.alert("Sessão expirada", "Por favor, faça o login novamente.");
-                router.replace('/auth');
-                return;
-            }
-
+            // 3. Pega o token diretamente do objeto 'user'
             const response = await axios.get(`${API_URL}/produtos/procurar`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${user.token}` }
             });
             setAllProducts(response.data);
             setFilteredProducts(response.data);
         } catch (error) {
-            if (axios.isAxiosError(error) && (error.response?.status === 403)) {
-                Alert.alert("Sessão inválida", "Sua sessão expirou ou é inválida. Faça o login.");
-                await AsyncStorage.removeItem('userToken');
-                router.replace('/auth');
+            // 4. Centraliza o tratamento de erro de autenticação
+            if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
+                Alert.alert("Sessão Inválida", "Por favor, faça o login novamente.");
+                await signOut();
             } else {
                 console.error('Erro ao buscar produtos:', error);
                 Alert.alert('Erro', 'Não foi possível carregar os produtos.');
@@ -83,11 +81,10 @@ export default function ProductsScreen() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [user, signOut]);
 
-    useFocusEffect(useCallback(() => {
-        fetchProducts();
-    }, []));
+    useFocusEffect(useCallback(() => { fetchProducts(); }, [fetchProducts]));
+
 
     useEffect(() => {
         const query = searchQuery.toLowerCase();
@@ -128,33 +125,31 @@ export default function ProductsScreen() {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <StatusBar barStyle="light-content" />
             <View style={styles.container}>
                 <View style={styles.searchContainer}>
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Procuro comidas, tendas ou vendedores"
                         placeholderTextColor="#999"
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
+                        value={searchQuery} // Conecta o valor ao estado
+                        onChangeText={setSearchQuery} // Atualiza o estado ao digitar
                     />
                     <FontAwesome name="search" size={20} color="#777" style={styles.searchIcon} />
                 </View>
 
-                {/* Botões para Adicionar */}
-                <View style={styles.buttonsContainer}>
-                    <TouchableOpacity style={styles.addButton} onPress={handleAddProductPress}>
-                        <FontAwesome name="plus-circle" size={24} color="white" />
-                        <Text style={styles.addButtonText}>Novo Produto</Text>
-                    </TouchableOpacity>
-
-                    {/* NOVO BOTÃO: Adicionar Nova Categoria */}
-                    <TouchableOpacity style={styles.addButton} onPress={handleAddCategoryPress}>
-                        <FontAwesome name="tags" size={24} color="white" />
-                        <Text style={styles.addButtonText}>Nova Categoria</Text>
-                    </TouchableOpacity>
-                </View>
-
+                {/* 5. A lógica de visibilidade dos botões agora usa o 'user' do contexto */}
+                {(user?.role === 'ADMIN' || user?.role === 'VENDEDOR') && (
+                    <View style={styles.buttonsContainer}>
+                        <TouchableOpacity style={styles.addButton} onPress={handleAddProductPress}>
+                            <FontAwesome name="plus-circle" size={24} color="white" />
+                            <Text style={styles.addButtonText}>Novo Produto</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.addButton} onPress={handleAddCategoryPress}>
+                            <FontAwesome name="tags" size={24} color="white" />
+                            <Text style={styles.addButtonText}>Nova Categoria</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
 
                 <FlatList
                     data={filteredProducts}
@@ -166,7 +161,6 @@ export default function ProductsScreen() {
                     )}
                     keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
-                    showsVerticalScrollIndicator={false}
                     ListEmptyComponent={<Text style={styles.emptyText}>Nenhum produto encontrado.</Text>}
                 />
             </View>

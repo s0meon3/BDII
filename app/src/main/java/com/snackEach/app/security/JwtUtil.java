@@ -1,5 +1,6 @@
 package com.snackEach.app.security;
 
+import com.snackEach.app.model.UsuarioTipo;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -8,13 +9,19 @@ import io.jsonwebtoken.security.Keys;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JwtUtil {
     private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private static final long EXPIRATION_TIME = 86400000; // 24 hours in milliseconds
 
-    public static String generateToken(String email) {
+    public static String generateToken(String email, UsuarioTipo usuarioTipo) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", usuarioTipo.name());
+
         return Jwts.builder()
+                .setClaims(claims)
                 .setSubject(email)
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(SECRET_KEY)

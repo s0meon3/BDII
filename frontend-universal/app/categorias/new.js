@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView,
     StatusBar, Alert, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/context/authContext';
 
-const API_URL = 'http://127.0.0.1:8080';
+const API_URL = 'http://192.168.0.13:8080';
 
 const FormularioCategoria = ({ router }) => {
+    const { user } = useAuth();
     const [nomeCategoria, setNomeCategoria] = useState('');
 
     const handleCadastroCategoria = async () => {
@@ -18,24 +19,18 @@ const FormularioCategoria = ({ router }) => {
             return;
         }
 
+        if (!user?.token) {
+            Alert.alert("Erro", "Você precisa estar logado para cadastrar uma categoria.");
+            return;
+        }
+
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            if (!token) {
-                Alert.alert("Erro", "Você precisa estar logado para cadastrar uma categoria.");
-                return;
-            }
-
-            const payload = {
-                nome: nomeCategoria,
-            };
-            console.log(payload)
+            const payload = { nome: nomeCategoria };
             await axios.post(`${API_URL}/categorias`, payload, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${user.token}` } // USA O TOKEN DO CONTEXTO
             });
-
             Alert.alert('Sucesso', 'Categoria cadastrada com sucesso!');
-            setNomeCategoria(''); // Limpa o campo após o sucesso
-            router.back(); // Volta para a tela anterior
+            router.back();
         } catch (error) {
             console.error('Detalhes do erro:', error.response?.data || error.message);
             Alert.alert('Erro', 'Não foi possível cadastrar a categoria. Tente novamente.');
@@ -63,6 +58,18 @@ const FormularioCategoria = ({ router }) => {
 
 export default function CadastroCategoriaScreen() {
     const router = useRouter();
+    const { user, isLoading } = useAuth();
+
+    useEffect(() => {
+        if (!isLoading && (user?.role !== 'ADMIN' && user?.role !== 'VENDEDOR')) {
+            Alert.alert("Acesso Negado", "Você não tem permissão para acessar esta página.");
+            router.replace('/(tabs)/home');
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading || (user?.role !== 'ADMIN' && user?.role !== 'VENDEDOR')) {
+        return <SafeAreaView style={styles.safeArea}></SafeAreaView>;
+    }
 
     return (
         <SafeAreaView style={styles.safeArea}>

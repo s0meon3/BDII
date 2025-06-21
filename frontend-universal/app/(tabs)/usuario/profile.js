@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView,
-    StatusBar, Alert, ScrollView, ActivityIndicator
+    Alert, ScrollView, ActivityIndicator
 } from 'react-native';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons'; // Para o ícone de lápis
 import {useFocusEffect, useRouter} from 'expo-router';
+import { useAuth } from '@/context/authContext';
 
 // IMPORTANTE: Use o mesmo IP da sua máquina que está no outro arquivo.
 const API_URL = 'http://192.168.0.13:8080';
@@ -32,6 +32,7 @@ const InfoField = ({ label, value, editable, onChangeText, isPassword = false })
 
 
 export default function ProfileScreen() {
+    const { user, signOut } = useAuth();
     const [userData, setUserData] = useState({
         nome: '',
         cpf: '',
@@ -46,53 +47,54 @@ export default function ProfileScreen() {
     const router = useRouter();
 
     // Função para buscar os dados do usuário
-    const fetchUserData = async () => {
+    const fetchUserData = useCallback(async () => {
+        if (!user) {
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            if (!token) {
-                Alert.alert("Erro", "Você não está autenticado.");
-                router.replace('/auth');
-                return;
-            }
-
+            // 4. Pega o token diretamente do objeto 'user' do contexto
             const response = await axios.get(`${API_URL}/usuario/perfil`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${user.token}` }
             });
-
             setUserData(response.data);
-            setOriginalUserData(response.data); // Salva o estado original para o "cancelar"
-
+            setOriginalUserData(response.data);
         } catch (error) {
-            console.error('Erro ao buscar dados do usuário:', error);
-            Alert.alert('Erro', 'Não foi possível carregar seus dados.');
+            // 5. Se o token for inválido, o signOut do contexto será chamado
+            if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
+                Alert.alert("Sessão Inválida", "Por favor, faça o login novamente.");
+                await signOut(); // O signOut já lida com a limpeza e o AuthProvider redirecionará
+            } else {
+                console.error('Erro ao buscar dados do usuário:', error);
+                Alert.alert('Erro', 'Não foi possível carregar seus dados.');
+            }
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [user, signOut]); // Adiciona signOut às dependências
 
-    // useFocusEffect garante que os dados sejam recarregados toda vez que a tela entra em foco
     useFocusEffect(
         useCallback(() => {
             fetchUserData();
-        }, [])
+        }, [fetchUserData])
     );
+
+    const handleLogout = async () => {
+        await signOut();
+    };
 
     const handleUpdate = async () => {
         try {
-            const token = await AsyncStorage.getItem('userToken');
+            if (!user) return;
             const payload = { ...userData };
-            if (senha) { // Apenas envia a senha se ela foi alterada
-                payload.senha = senha;
-            }
-
+            if (senha) { payload.senha = senha; }
             await axios.put(`${API_URL}/usuario/atualizar`, payload, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${user.token}` } // USA O TOKEN DO CONTEXTO
             });
-
             Alert.alert('Sucesso', 'Dados atualizados!');
             setIsEditing(false);
-            setSenha(''); // Limpa o campo de senha
+            setSenha('');
         } catch (error) {
             console.error('Erro ao atualizar dados:', error);
             Alert.alert('Erro', 'Não foi possível atualizar seus dados.');
@@ -110,45 +112,25 @@ export default function ProfileScreen() {
     };
 
     if (isLoading) {
-        return (
-            <SafeAreaView style={styles.safeArea}>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="white" />
-                </View>
-            </SafeAreaView>
-        );
+        return ( <SafeAreaView style={styles.safeArea}><ActivityIndicator size="large" color="white" style={{ flex: 1 }} /></SafeAreaView> );
     }
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <StatusBar barStyle="light-content" />
             <ScrollView contentContainerStyle={styles.container}>
                 <Text style={styles.title}>Gerencie seus dados</Text>
-
                 <View style={styles.form}>
                     <InfoField label="Nome" value={userData.nome} editable={isEditing} onChangeText={(v) => handleChange('nome', v)} />
-                    <InfoField label="CPF" value={userData.cpf} editable={false} /> {/* CPF geralmente não é editável */}
+                    <InfoField label="CPF" value={userData.cpf} editable={false} />
                     <InfoField label="Curso" value={userData.curso} editable={isEditing} onChangeText={(v) => handleChange('curso', v)} />
                     <InfoField label="Email" value={userData.email} editable={isEditing} onChangeText={(v) => handleChange('email', v)} />
                     <InfoField label="Senha" value={senha} editable={isEditing} onChangeText={setSenha} isPassword={true} />
-
-                    <View style={styles.buttonContainer}>
-                        {isEditing ? (
-                            <>
-                                <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleUpdate}>
-                                    <Text style={styles.buttonText}>Salvar</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
-                                    <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancelar</Text>
-                                </TouchableOpacity>
-                            </>
-                        ) : (
-                            <TouchableOpacity style={styles.button} onPress={() => setIsEditing(true)}>
-                                <Text style={styles.buttonText}>Editar Dados</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
+                    <View style={styles.buttonContainer}>{isEditing ? (<><TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleUpdate}><Text style={styles.buttonText}>Salvar</Text></TouchableOpacity><TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}><Text style={[styles.buttonText, styles.cancelButtonText]}>Cancelar</Text></TouchableOpacity></>) : (<TouchableOpacity style={styles.button} onPress={() => setIsEditing(true)}><Text style={styles.buttonText}>Editar Dados</Text></TouchableOpacity>)}</View>
                 </View>
+
+                <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
+                    <Text style={styles.buttonText}>Sair (Logout)</Text>
+                </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
     );
@@ -202,6 +184,11 @@ const styles = StyleSheet.create({
         height: 48,
     },
     buttonContainer: {
+        marginTop: 20,
+    },
+    logoutButton: {
+        backgroundColor: '#D32F2F',
+        marginHorizontal: 16,
         marginTop: 20,
     },
     button: {

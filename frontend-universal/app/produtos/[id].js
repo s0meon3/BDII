@@ -3,64 +3,56 @@ import {
     View, Text, StyleSheet, SafeAreaView, StatusBar,
     ActivityIndicator, Image, TouchableOpacity, Linking, Alert
 } from 'react-native';
-import {useLocalSearchParams, Stack, useRouter} from 'expo-router';
+import {useLocalSearchParams, Stack} from 'expo-router';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
+import { useAuth } from '@/context/authContext';
 
 const API_URL = 'http://192.168.0.13:8080';
 
 export default function ProductDetailScreen() {
-    const { id } = useLocalSearchParams(); // Pega o ID do produto da URL
+    const { id } = useLocalSearchParams();
+    const { user, signOut } = useAuth(); // 2. USAR O CONTEXTO
     const [product, setProduct] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
 
     useEffect(() => {
-
-        if (id) {
-            const fetchProductDetail = async () => {
-                setIsLoading(true);
-                try {
-                    const token = await AsyncStorage.getItem('userToken');
-
-                    if (!token) {
-                        Alert.alert("Sessão expirada", "Por favor, faça o login novamente.");
-                        router.replace('/auth');
-                        return;
-                    }
-
-                    const response = await axios.get(`${API_URL}/produtos/${id}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    setProduct(response.data);
-                } catch (error) {
-                    if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
-                        Alert.alert("Sessão inválida", "Sua sessão expirou ou é inválida. Faça o login.");
-                        await AsyncStorage.removeItem('userToken');
-                        router.replace('/auth');
-                    } else {
-                        console.error("Erro ao buscar detalhes do produto:", error);
-                        Alert.alert("Erro", "Não foi possível carregar os detalhes do produto.");
-                    }
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-            fetchProductDetail();
+        if (!id || !user) {
+            return;
         }
-    }, [id]);
+
+        const fetchProductDetail = async () => {
+            setIsLoading(true);
+            try {
+                // 3. Pega o token diretamente do objeto 'user' do contexto
+                const response = await axios.get(`${API_URL}/produtos/${id}`, {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                });
+                setProduct(response.data);
+            } catch (error) {
+                // 4. Centraliza o tratamento de erro de autenticação
+                if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
+                    Alert.alert("Sessão Inválida", "Por favor, faça o login novamente.");
+                    await signOut(); // O signOut já lida com a limpeza e o AuthProvider redirecionará
+                } else {
+                    console.error("Erro ao buscar detalhes do produto:", error);
+                    Alert.alert("Erro", "Não foi possível carregar os detalhes do produto.");
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProductDetail();
+    }, [id, user, signOut]);
 
     const handleWhatsAppPress = () => {
         if (!product?.vendedor?.telefone) {
             Alert.alert("Erro", "O vendedor não possui um número de telefone cadastrado.");
             return;
         }
-        // Formato: 55 (Brasil) + 11 (DDD) + 912345678 (Número)
         const phoneNumber = product.vendedor.telefone;
         const message = `Olá! Tenho interesse no produto *${product.nome}*. Podemos conversar?`;
 
-        // Monta a URL para o WhatsApp
         const url = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 
         Linking.openURL(url).catch(() => {
@@ -82,7 +74,6 @@ export default function ProductDetailScreen() {
             <StatusBar barStyle="light-content" />
             <View style={styles.container}>
                 <View style={styles.card}>
-                    {/* Reutilizando os estilos do card da tela anterior */}
                     <View style={styles.cardTopRow}>
                         <Text style={styles.productName}>{product.nome}</Text>
                         <FontAwesome name="star" size={16} color="#FFD700" style={{ marginLeft: 8 }} />
@@ -96,8 +87,6 @@ export default function ProductDetailScreen() {
                         <Text style={styles.priceText}>R$ {product.preco.toFixed(2).replace('.', ',')}</Text>
                         <Text style={styles.sellerText}>Vendido por: {product.vendedor.nomeTenda}</Text>
                     </View>
-
-                    {/* Novas informações do vendedor */}
                     <View style={styles.separator} />
                     <Text style={styles.sellerInfoText}>
                         Horário do vendedor: {product.vendedor.horarioInicio} às {product.vendedor.horarioFim}
@@ -116,7 +105,6 @@ export default function ProductDetailScreen() {
     );
 }
 
-// Estilos (muitos são reaproveitados da tela anterior)
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#DD6B20' },
     container: { flex: 1, backgroundColor: '#F57C00', padding: 16 },

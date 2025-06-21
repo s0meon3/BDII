@@ -5,12 +5,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
+import { useAuth } from '@/context/authContext';
 
-const API_URL = 'http://127.0.0.1:8080';
+const API_URL = 'http://192.168.0.13:8080';
 
 const FormularioProduto = ({ router }) => {
+    const { user, isLoading: isAuthLoading } = useAuth();
     const [formData, setFormData] = useState({
         nome: '',
         descricao: '',
@@ -22,71 +23,64 @@ const FormularioProduto = ({ router }) => {
     const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
     useEffect(() => {
+        if (!isAuthLoading && (user?.role !== 'ADMIN' && user?.role !== 'VENDEDOR')) {
+            Alert.alert("Acesso Negado", "Você não tem permissão para cadastrar produtos.");
+            router.replace('/(tabs)/home');
+            return;
+        }
+
         const fetchCategorias = async () => {
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                if (!token) {
-                    Alert.alert("Erro", "Você precisa estar logado para acessar as categorias.");
+            if (user?.token) {
+                try {
+                    // 3. Usa o token do contexto para buscar as categorias
+                    const response = await axios.get(`${API_URL}/categorias`, {
+                        headers: { 'Authorization': `Bearer ${user.token}` }
+                    });
+                    setCategorias(response.data);
+                    if (response.data.length > 0) {
+                        setCategoriaSelecionada(response.data[0].id);
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar categorias:', error.response?.data || error.message);
+                    Alert.alert('Erro', 'Não foi possível carregar as categorias.');
+                } finally {
                     setIsLoadingCategories(false);
-                    return;
                 }
-                const response = await axios.get(`${API_URL}/categorias`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                setCategorias(response.data);
-                if (response.data.length > 0) {
-                    setCategoriaSelecionada(response.data[0].id);
-                }
-            } catch (error) {
-                console.error('Erro ao buscar categorias:', error.response?.data || error.message);
-                Alert.alert('Erro', 'Não foi possível carregar as categorias.');
-            } finally {
-                setIsLoadingCategories(false);
             }
         };
-
         fetchCategorias();
-    }, []);
+    }, [user, isAuthLoading, router]);
 
     const handleChange = (name, value) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleCadastroProduto = async () => {
-        if (!formData.nome || !formData.preco || categoriaSelecionada === null) {
-            Alert.alert('Erro', 'Os campos "Nome", "Preço" e "Categoria" são obrigatórios.');
+        if (!formData.nome || !formData.preco || categoriaSelecionada === null) { /* ... */ }
+
+        // 4. Pega o token e o vendedorId diretamente do contexto
+        if (!user || !user.vendedorId) {
+            Alert.alert('Erro de Autenticação', 'Não foi possível identificar o vendedor. Por favor, faça login novamente.');
             return;
         }
 
         try {
-            const vendedorId = await AsyncStorage.getItem('vendedorId');
-            console.log(vendedorId)
-            const token = await AsyncStorage.getItem('userToken');
-
-            if (!vendedorId) {
-                Alert.alert('Erro de Autenticação', 'Não foi possível identificar o vendedor. Por favor, faça login novamente.');
-                return;
-            }
-            console.log(vendedorId)
             const payload = {
                 nome: formData.nome,
                 descricao: formData.descricao,
                 imageUrl: formData.imageUrl,
                 preco: parseFloat(formData.preco.replace(',', '.')),
-                vendedorUsuarioId: parseInt(vendedorId, 10),
+                vendedorUsuarioId: user.vendedorId, // USA O ID DO VENDEDOR DO CONTEXTO
                 categoriaIds: [categoriaSelecionada],
             };
-            console.log(payload)
             await axios.post(`${API_URL}/produtos`, payload, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${user.token}` } // USA O TOKEN DO CONTEXTO
             });
-
             Alert.alert('Sucesso', 'Produto cadastrado com sucesso!');
             router.back();
-
         } catch (error) {
             console.error('Detalhes do erro:', error.response?.data || error.message);
-            Alert.alert('Erro', 'Não foi possível cadastrar o produto. Verifique os dados e tente novamente.');
+            Alert.alert('Erro', 'Não foi possível cadastrar o produto.');
         }
     };
 
@@ -155,7 +149,6 @@ const FormularioProduto = ({ router }) => {
 
 export default function CadastroProdutoScreen() {
     const router = useRouter();
-
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="light-content" />
