@@ -1,4 +1,4 @@
-DBSnackEach - Modelo Fisico
+-- DBSnackEach - Modelo Fisico
 -- #####################################################################
 -- # TABELAS DE USUÁRIOS E ESPECIALIZAÇÃO
 -- #####################################################################
@@ -21,7 +21,7 @@ CREATE TABLE vendedor (
     horario_fim TIME,
     faz_entrega BOOLEAN NOT NULL DEFAULT FALSE,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
-    telefone VARCHAR(20) NOT NULL;
+    telefone VARCHAR(20) NOT NULL,
     CONSTRAINT fk_vendedor_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
 );
 
