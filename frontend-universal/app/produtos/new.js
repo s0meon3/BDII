@@ -8,7 +8,7 @@ import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '@/context/authContext';
 
-const API_URL = 'http://192.168.0.13:8080';
+const API_URL = 'http://localhost:8080';
 
 const FormularioProduto = ({ router }) => {
     const { user, isLoading: isAuthLoading } = useAuth();

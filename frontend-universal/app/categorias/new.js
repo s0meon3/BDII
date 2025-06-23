@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import axios from 'axios';
 import { useAuth } from '@/context/authContext';
 
-const API_URL = 'http://192.168.0.13:8080';
+const API_URL = 'http://localhost:8080';
 
 const FormularioCategoria = ({ router }) => {
     const { user } = useAuth();

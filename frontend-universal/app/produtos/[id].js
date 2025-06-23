@@ -8,7 +8,7 @@ import axios from 'axios';
 import { FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '@/context/authContext';
 
-const API_URL = 'http://192.168.0.13:8080';
+const API_URL = 'http://localhost:8080';
 
 export default function ProductDetailScreen() {
     const { id } = useLocalSearchParams();

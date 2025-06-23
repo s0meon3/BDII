@@ -9,7 +9,7 @@ import {useFocusEffect, useRouter} from 'expo-router';
 import { useAuth } from '@/context/authContext';
 
 // IMPORTANTE: Use o mesmo IP da sua máquina que está no outro arquivo.
-const API_URL = 'http://192.168.0.13:8080';
+const API_URL = 'http://localhost:8080';
 
 // Componente reutilizável para cada campo de informação
 const InfoField = ({ label, value, editable, onChangeText, isPassword = false }) => (

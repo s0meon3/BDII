@@ -17,7 +17,7 @@ export default function NotFoundScreen() {
           </Text>
 
           {/* O componente Link do Expo Router lida com a navegação */}
-          <Link href="/(tabs)/produtos/home" asChild>
+          <Link href="/(tabs)/home" asChild>
             <TouchableOpacity style={styles.button}>
               <Text style={styles.buttonText}>Voltar para a tela inicial</Text>
             </TouchableOpacity>

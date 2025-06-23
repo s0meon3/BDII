@@ -9,7 +9,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '@/context/authContext';
 
-const API_URL = 'http://192.168.0.13:8080';
+const API_URL = 'http://localhost:8080';
 
 const ProductCard = ({ product, onPress }) => {
     const categoryTag = product.categorias && product.categorias.length > 0 ? product.categorias[0].nome : null;
