@@ -50,6 +50,7 @@ class ProdutoServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        usuarioRepository.deleteAll();
         // Cria categoria
         Categoria categoria = new Categoria();
         categoria.setNome("Lanches");
