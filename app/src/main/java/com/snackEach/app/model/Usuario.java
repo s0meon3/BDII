@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Cache;
 
 @Entity
 @Table(name = "usuario")
@@ -11,6 +13,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
